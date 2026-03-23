@@ -1,5 +1,6 @@
 package com.billpayments.billpaymentsystem.service.impl;
 
+import com.billpayments.billpaymentsystem.enums.NotificationType;
 import com.billpayments.billpaymentsystem.enums.TransactionStatus;
 import com.billpayments.billpaymentsystem.enums.TransactionType;
 import com.billpayments.billpaymentsystem.exceptions.BadRequestException;
@@ -13,6 +14,7 @@ import com.billpayments.billpaymentsystem.payload.response.WalletResponse;
 import com.billpayments.billpaymentsystem.repository.TransactionRepository;
 import com.billpayments.billpaymentsystem.repository.UserRepository;
 import com.billpayments.billpaymentsystem.repository.WalletRepository;
+import com.billpayments.billpaymentsystem.service.NotificationService;
 import com.billpayments.billpaymentsystem.service.WalletService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -37,6 +39,7 @@ public class WalletServiceImpl implements WalletService{
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
     private final Gson gson;
 
     @Value("${paystack.secret.key}")
@@ -171,6 +174,15 @@ public class WalletServiceImpl implements WalletService{
         transactionRepository.save(transaction);
 
         log.info("Wallet credited successfully for user: {}", transaction.getUser().getEmail());
+
+        notificationService.createNotification(
+                transaction.getUser(),
+                NotificationType.WALLET_FUNDED,
+                "Wallet Funded Successfully",
+                "Your wallet has been credited with ₦" + transaction.getAmount() +
+                        ". Your new balance is ₦" + wallet.getBalance(),
+                transaction.getReferenceId()
+        );
     }
 
 }

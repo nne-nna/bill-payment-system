@@ -1,5 +1,6 @@
 package com.billpayments.billpaymentsystem.service.impl;
 
+import com.billpayments.billpaymentsystem.enums.NotificationType;
 import com.billpayments.billpaymentsystem.enums.ServiceProvider;
 import com.billpayments.billpaymentsystem.enums.TransactionStatus;
 import com.billpayments.billpaymentsystem.enums.TransactionType;
@@ -14,6 +15,7 @@ import com.billpayments.billpaymentsystem.repository.TransactionRepository;
 import com.billpayments.billpaymentsystem.repository.UserRepository;
 import com.billpayments.billpaymentsystem.repository.WalletRepository;
 import com.billpayments.billpaymentsystem.service.BillPaymentService;
+import com.billpayments.billpaymentsystem.service.NotificationService;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import kong.unirest.HttpResponse;
@@ -37,6 +39,7 @@ public class BillPaymentServiceImpl implements BillPaymentService {
     private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
+    private final NotificationService notificationService;
     private final Gson gson;
 
     @Value("${vtpass.base.url}")
@@ -243,6 +246,15 @@ public class BillPaymentServiceImpl implements BillPaymentService {
 
                 log.info("Bill payment successful for user: {}", user.getEmail());
 
+                notificationService.createNotification(
+                        user,
+                        NotificationType.BILL_PAYMENT_SUCCESS,
+                        "Bill Payment Successful",
+                        "Your " + request.getServiceID() + " payment of ₦" +
+                                request.getAmount() + " was successful.",
+                        requestId
+                );
+
                 return BillPaymentResponse.builder()
                         .referenceId(requestId)
                         .status("SUCCESS")
@@ -260,22 +272,29 @@ public class BillPaymentServiceImpl implements BillPaymentService {
                         .customerAddress(customerAddress)
                         .build();
             } else {
-                //failed(refund the wallet)
-                log.error("VTPass payment failed. Code: {}, Description: {}",
-                        code, responseDescription);
+            log.error("VTPass payment failed. Code: {}, Description: {}",
+                    code, responseDescription);
 
-                wallet.setBalance(wallet.getBalance().add(request.getAmount()));
-                walletRepository.save(wallet);
+            wallet.setBalance(wallet.getBalance().add(request.getAmount()));
+            walletRepository.save(wallet);
 
-                transaction.setStatus(TransactionStatus.FAILED);
-                transactionRepository.save(transaction);
+            transaction.setStatus(TransactionStatus.FAILED);
+            transactionRepository.save(transaction);
 
-                throw new BadRequestException("Bill payment failed: " + responseDescription);
-            }
-        } catch (BadRequestException e){
+            notificationService.createNotification(
+                    user,
+                    NotificationType.BILL_PAYMENT_FAILED,
+                    "Bill Payment Failed",
+                    "Your " + request.getServiceID() + " payment of ₦" +
+                            request.getAmount() + " failed. Your wallet has been refunded.",
+                    requestId
+            );
+
+            throw new BadRequestException("Bill payment failed: " + responseDescription);
+        }
+        } catch (BadRequestException e) {
             throw e;
-        } catch (Exception e){
-            //sth unexpected happened. refund wallet
+        } catch (Exception e) {
             log.error("Unexpected error during bill payment: {}", e.getMessage(), e);
 
             wallet.setBalance(wallet.getBalance().add(request.getAmount()));
@@ -283,6 +302,15 @@ public class BillPaymentServiceImpl implements BillPaymentService {
 
             transaction.setStatus(TransactionStatus.FAILED);
             transactionRepository.save(transaction);
+
+            notificationService.createNotification(
+                    user,
+                    NotificationType.BILL_PAYMENT_FAILED,
+                    "Bill Payment Failed",
+                    "Your " + request.getServiceID() + " payment of ₦" +
+                            request.getAmount() + " failed. Your wallet has been refunded.",
+                    requestId
+            );
 
             throw new BadRequestException("Bill payment failed: " + e.getMessage());
         }
