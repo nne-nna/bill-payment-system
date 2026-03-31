@@ -1,0 +1,7 @@
+target/*.jar
+*.log
+*.class
+*.jar.original
+.idea
+.vscode
+.git
