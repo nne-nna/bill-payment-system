@@ -10,4 +10,5 @@ public interface WalletService {
     WalletResponse getBalance(Principal principal);
     PaystackInitResponse initiateFunding(FundWalletRequest request, Principal principal);
     void verifyAndCreditWallet(String reference);
+    void handlePaystackWebhook(String payload, String signature);
 }

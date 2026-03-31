@@ -37,4 +37,12 @@ public class WalletController {
         walletService.verifyAndCreditWallet(reference);
         return ResponseEntity.ok("Wallet funded successfully");
     }
+
+    @PostMapping("/webhook/paystack")
+    public ResponseEntity<?> paystackWebhook(
+            @RequestBody String payload,
+            @RequestHeader("x-paystack-signature") String signature) {
+        walletService.handlePaystackWebhook(payload, signature);
+        return ResponseEntity.ok().build();
+    }
 }

@@ -24,6 +24,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+import java.nio.charset.StandardCharsets;
 
 import java.math.BigDecimal;
 import kong.unirest.HttpResponse;
@@ -31,6 +34,7 @@ import java.security.Principal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+
 
 @Service
 @RequiredArgsConstructor
@@ -183,6 +187,49 @@ public class WalletServiceImpl implements WalletService{
                         ". Your new balance is ₦" + wallet.getBalance(),
                 transaction.getReferenceId()
         );
+    }
+
+    @Override
+    @Transactional
+    public void handlePaystackWebhook(String payload, String signature) {
+        log.info("Received Paystack webhook");
+
+        // Verify webhook signature
+        try {
+            Mac mac = Mac.getInstance("HmacSHA512");
+            SecretKeySpec secretKey = new SecretKeySpec(
+                    paystackSecretKey.getBytes(StandardCharsets.UTF_8), "HmacSHA512");
+            mac.init(secretKey);
+            byte[] hmac = mac.doFinal(payload.getBytes(StandardCharsets.UTF_8));
+            String computedSignature = bytesToHex(hmac);
+
+            if (!computedSignature.equals(signature)) {
+                log.warn("Invalid webhook signature");
+                return;
+            }
+        } catch (Exception e) {
+            log.error("Webhook signature verification failed: {}", e.getMessage());
+            return;
+        }
+
+        // Parse and process
+        JsonObject event = gson.fromJson(payload, JsonObject.class);
+        String eventType = event.get("event").getAsString();
+
+        if ("charge.success".equals(eventType)) {
+            JsonObject data = event.getAsJsonObject("data");
+            String reference = data.get("reference").getAsString();
+            log.info("Webhook charge.success for reference: {}", reference);
+            verifyAndCreditWallet(reference);
+        }
+    }
+
+    private String bytesToHex(byte[] bytes) {
+        StringBuilder sb = new StringBuilder();
+        for (byte b : bytes) {
+            sb.append(String.format("%02x", b));
+        }
+        return sb.toString();
     }
 
 }

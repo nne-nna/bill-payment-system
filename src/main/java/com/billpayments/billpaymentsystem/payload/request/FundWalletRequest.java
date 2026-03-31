@@ -18,8 +18,8 @@ public class FundWalletRequest {
     @Positive(message = "Amount must be greater than zero")
     private BigDecimal amount;
 
-    @NotNull(message = "Email is reuired")
-    private String email;
+//    @NotNull(message = "Email is reuired")
+//    private String email;
 }
 
 //what the app receives from the user(amount)

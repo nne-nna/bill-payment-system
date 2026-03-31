@@ -12,10 +12,10 @@ import java.util.List;
 @Repository
 public interface NotificationRepository extends JpaRepository<Notification, Long>{
     List<Notification> findByUserOrderByCreatedAtDesc(User user);
-    List<Notification> findByUserAndIsReadFalseOrderByCreatedAtDesc(User user);
-    long countByUserAndIsReadFalse(User user);
+    List<Notification> findByUserAndReadFalseOrderByCreatedAtDesc(User user);
+    long countByUserAndReadFalse(User user);
 
     @Modifying
-    @Query("UPDATE Notification n SET n.isRead = true WHERE n.user = :user")
+    @Query("UPDATE Notification n SET n.read = true WHERE n.user = :user")
     void markAllAsRead(User user);
 }

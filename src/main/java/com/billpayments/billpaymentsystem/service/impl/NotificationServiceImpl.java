@@ -56,7 +56,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .title(title)
                 .message(message)
                 .referenceId(referenceId)
-                .isRead(false)
+                .read(false)
                 .build();
 
         notificationRepository.save(notification);
@@ -73,7 +73,7 @@ public class NotificationServiceImpl implements NotificationService {
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
 
-        long unreadCount = notificationRepository.countByUserAndIsReadFalse(user);
+        long unreadCount = notificationRepository.countByUserAndReadFalse(user);
 
         return NotificationSummaryResponse.builder()
                 .unreadCount(unreadCount)
@@ -86,7 +86,7 @@ public class NotificationServiceImpl implements NotificationService {
         User user = getUser(principal.getName());
 
         return notificationRepository
-                .findByUserAndIsReadFalseOrderByCreatedAtDesc(user)
+                .findByUserAndReadFalseOrderByCreatedAtDesc(user)
                 .stream()
                 .map(this::mapToResponse)
                 .collect(Collectors.toList());
