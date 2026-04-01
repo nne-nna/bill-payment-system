@@ -1,45 +1,63 @@
 package com.billpayments.billpaymentsystem.service.impl;
 
 import com.billpayments.billpaymentsystem.service.EmailService;
+import kong.unirest.HttpResponse;
+import kong.unirest.Unirest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${brevo.api.key}")
+    private String brevoApiKey;
 
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    @Value("${brevo.sender.email}")
+    private String senderEmail;
+
+    @Value("${brevo.sender.name:PayEase}")
+    private String senderName;
 
     @Override
     public void sendPasswordResetEmail(String to, String resetLink, String firstName) {
-        try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        String payload = """
+                {
+                  "sender": {
+                    "name": "%s",
+                    "email": "%s"
+                  },
+                  "to": [
+                    {
+                      "email": "%s"
+                    }
+                  ],
+                  "subject": "Reset Your PayEase Password",
+                  "htmlContent": %s
+                }
+                """.formatted(
+                escapeJson(senderName),
+                escapeJson(senderEmail),
+                escapeJson(to),
+                toJsonString(buildEmailTemplate(firstName, resetLink))
+        );
 
-            helper.setFrom(fromEmail);
-            helper.setTo(to);
-            helper.setSubject("Reset Your PayEase Password");
-            helper.setText(buildEmailTemplate(firstName, resetLink), true);
+        HttpResponse<String> response = Unirest.post("https://api.brevo.com/v3/smtp/email")
+                .header("accept", "application/json")
+                .header("api-key", brevoApiKey)
+                .header("content-type", "application/json")
+                .body(payload)
+                .asString();
 
-            mailSender.send(message);
-            log.info("Password reset email sent to: {}", to);
-
-        } catch (MessagingException e) {
-            log.error("Failed to send email to {}: {}", to, e.getMessage());
+        if (response.getStatus() >= 400) {
+            log.error("Failed to send email to {}: status={}, body={}", to, response.getStatus(), response.getBody());
             throw new RuntimeException("Failed to send reset email");
         }
+
+        log.info("Password reset email sent to: {}", to);
     }
 
     private String buildEmailTemplate(String firstName, String resetLink) {
@@ -88,5 +106,20 @@ public class EmailServiceImpl implements EmailService {
             </body>
             </html>
             """.formatted(firstName, resetLink, resetLink);
+    }
+
+    private String toJsonString(String value) {
+        return "\"" + escapeJson(value) + "\"";
+    }
+
+    private String escapeJson(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
+                .replace("\n", "\\n")
+                .replace("\r", "\\r")
+                .replace("\t", "\\t");
     }
 }
