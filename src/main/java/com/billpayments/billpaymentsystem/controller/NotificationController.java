@@ -31,23 +31,15 @@ public class NotificationController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/read")
+    @PostMapping("/{id}/read")
     public ResponseEntity<NotificationResponse> markAsRead(@PathVariable Long id, Principal principal){
         NotificationResponse response = notificationService.markAsRead(id, principal);
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/read-all")
+    @PostMapping("/read-all")
     public ResponseEntity<?> markAllAsRead(Principal principal) {
         notificationService.markAllAsRead(principal);
         return ResponseEntity.ok("All notifications marked as read");
-    }
-
-    @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteNotification(
-            @PathVariable Long id,
-            Principal principal) {
-        notificationService.deleteNotification(id, principal);
-        return ResponseEntity.ok("Notification deleted");
     }
 }

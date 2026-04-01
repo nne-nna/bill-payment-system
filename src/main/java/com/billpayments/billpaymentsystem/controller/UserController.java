@@ -26,7 +26,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/profile")
+    @PostMapping("/profile")
     public ResponseEntity<ProfileResponse> updateProfile(
             @Valid @RequestBody UpdateProfileRequest request,
             Principal principal) {
@@ -34,7 +34,7 @@ public class UserController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/change-password")
+    @PostMapping("/change-password")
     public ResponseEntity<?> changePassword(
             @Valid @RequestBody ChangePasswordRequest request,
             Principal principal) {

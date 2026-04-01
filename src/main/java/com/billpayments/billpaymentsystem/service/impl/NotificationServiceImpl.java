@@ -122,22 +122,4 @@ public class NotificationServiceImpl implements NotificationService {
         log.info("All notifications marked as read for user: {}", user.getEmail());
     }
 
-    @Override
-    @Transactional
-    public void deleteNotification(Long id, Principal principal) {
-        User user = getUser(principal.getName());
-
-        Notification notification = notificationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Notification not found with id: " + id));
-
-        // Security check
-        if (!notification.getUser().getId().equals(user.getId())) {
-            throw new BadRequestException(
-                    "You are not authorized to delete this notification");
-        }
-
-        notificationRepository.delete(notification);
-        log.info("Notification {} deleted", id);
-    }
 }

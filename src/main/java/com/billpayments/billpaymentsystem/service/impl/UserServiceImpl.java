@@ -52,15 +52,38 @@ public class UserServiceImpl implements UserService {
         User user = getUser(principal.getName());
         log.info("Updating profile for: {}", user.getEmail());
 
-        // Check if phone is taken by another user
-        if (!user.getPhone().equals(request.getPhone()) &&
-                userRepository.existsByPhone(request.getPhone())) {
-            throw new BadRequestException("Phone number already in use");
+        boolean hasFirstName = request.getFirstName() != null && !request.getFirstName().isBlank();
+        boolean hasLastName = request.getLastName() != null && !request.getLastName().isBlank();
+        boolean hasPhone = request.getPhone() != null && !request.getPhone().isBlank();
+
+        if (!hasFirstName && !hasLastName && !hasPhone) {
+            throw new BadRequestException("Provide at least one field to update");
         }
 
-        user.setFirstName(request.getFirstName());
-        user.setLastName(request.getLastName());
-        user.setPhone(request.getPhone());
+        if (request.getFirstName() != null) {
+            if (request.getFirstName().isBlank()) {
+                throw new BadRequestException("First name cannot be blank");
+            }
+            user.setFirstName(request.getFirstName());
+        }
+
+        if (request.getLastName() != null) {
+            if (request.getLastName().isBlank()) {
+                throw new BadRequestException("Last name cannot be blank");
+            }
+            user.setLastName(request.getLastName());
+        }
+
+        if (request.getPhone() != null) {
+            if (request.getPhone().isBlank()) {
+                throw new BadRequestException("Phone number cannot be blank");
+            }
+            if (!user.getPhone().equals(request.getPhone()) &&
+                    userRepository.existsByPhone(request.getPhone())) {
+                throw new BadRequestException("Phone number already in use");
+            }
+            user.setPhone(request.getPhone());
+        }
 
         userRepository.save(user);
         log.info("Profile updated successfully for: {}", user.getEmail());

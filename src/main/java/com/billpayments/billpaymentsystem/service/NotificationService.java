@@ -17,5 +17,4 @@ public interface NotificationService {
     List<NotificationResponse> getUnreadNotifications(Principal principal);
     NotificationResponse markAsRead(Long id, Principal principal);
     void markAllAsRead(Principal principal);
-    void deleteNotification(Long id, Principal principal);
 }
