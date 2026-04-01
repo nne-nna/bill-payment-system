@@ -79,7 +79,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth
                         .requestMatchers("/api/v1/auth/**").permitAll()
-                        .requestMatchers("/api/v1/wallet/webhook/**").permitAll();
+                        .requestMatchers("/api/v1/wallet/webhook/**").permitAll()
+                        .requestMatchers("/api/v1/wallet/verify/**").permitAll();
 
                     if (!prodProfileActive) {
                         auth.requestMatchers(

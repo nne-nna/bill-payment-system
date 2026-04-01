@@ -52,6 +52,9 @@ public class WalletServiceImpl implements WalletService{
     @Value("${paystack.base.url}")
     private String paystackBaseUrl;
 
+    @Value("${app.frontend.url}")
+    private String frontendUrl;
+
     private User getUser(String email){
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
@@ -90,6 +93,7 @@ public class WalletServiceImpl implements WalletService{
         body.put("email", user.getEmail());
         body.put("amount", request.getAmount().multiply(BigDecimal.valueOf(100)).intValue()); //paystack uses kobo
         body.put("reference", reference);
+        body.put("callback_url", frontendUrl + "/bill-payment?action=fund&paystack_ref=" + reference);
 
         //Call paystack initialization endpoint
         HttpResponse<String> response = Unirest.post(paystackBaseUrl + "/transaction/initialize")
@@ -165,7 +169,8 @@ public class WalletServiceImpl implements WalletService{
 
         // Check if already processed to avoid double crediting
         if (TransactionStatus.SUCCESS.equals(transaction.getStatus())) {
-            throw new BadRequestException("Transaction already processed");
+            log.info("Transaction {} already processed, skipping", reference);
+            return;
         }
 
         // Credit the wallet
