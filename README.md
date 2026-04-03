@@ -1,6 +1,13 @@
 # Bill Payment System
 
-A production-ready fintech REST API built with Java and Spring Boot that enables users to fund a wallet and pay utility bills including electricity, airtime, data, and cable TV subscriptions across major Nigerian providers.
+A production-style fintech REST API built with Java and Spring Boot for wallet funding and utility bill payments including electricity, airtime, data, and cable TV subscriptions across major Nigerian providers.
+It powers the PayEase frontend with secure authentication, payment processing, notifications, and transaction tracking.
+
+---
+
+## Live Links
+
+- Frontend: [PayEase Web](https://payease-web.vercel.app)
 
 ---
 
