@@ -8,6 +8,7 @@ It powers the PayEase frontend with secure authentication, payment processing, n
 ## Live Links
 
 - Frontend: [PayEase Web](https://payease-web.vercel.app)
+- API Docs (Swagger): [Bill Payment API Docs](https://bill-payment-system.onrender.com/swagger-ui/index.html)
 
 ---
 
