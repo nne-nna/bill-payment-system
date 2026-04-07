@@ -34,5 +34,9 @@ public class RegisterRequest {
     private String password;
 
     @NotBlank(message = "Phone number is required")
+    @Pattern(
+            regexp = "^(?:(?:\\+234|234)|0)(?:70|80|81|90|91)\\d{8}$",
+            message = "Phone number must be a valid Nigerian mobile number"
+    )
     private String phone;
 }
