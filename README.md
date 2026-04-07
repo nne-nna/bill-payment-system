@@ -18,6 +18,9 @@ It powers the PayEase frontend with secure authentication, payment processing, n
 - Password reset flow via email
 - Wallet funding via Paystack
 - Paystack redirect and webhook support
+- Standardized API error responses for frontend form handling
+- Rate limiting on sensitive authentication endpoints
+- Nigerian phone number validation on registration and profile updates
 - Electricity bill payments across major Nigerian providers
 - Airtime and data purchases for major networks
 - Cable TV subscriptions
@@ -294,6 +297,12 @@ APP_FRONTEND_URL=https://payease-web.vercel.app
 | POST | `/api/v1/auth/forgot-password` | Request password reset email | No |
 | POST | `/api/v1/auth/reset-password` | Reset password with token | No |
 
+Authentication endpoints with rate limiting:
+
+- `POST /api/v1/auth/login`: 5 requests per minute per client
+- `POST /api/v1/auth/register`: 3 requests per minute per client
+- `POST /api/v1/auth/forgot-password`: 5 requests per minute per client
+
 #### Register
 
 ```json
@@ -306,6 +315,8 @@ POST /api/v1/auth/register
   "phone": "08012345678"
 }
 ```
+
+`phone` must be a valid Nigerian mobile number such as `08012345678`, `08112345678`, `09012345678`, `09112345678`, `07012345678`, `2348012345678`, or `+2348012345678`.
 
 #### Login
 
@@ -367,6 +378,8 @@ Authorization: Bearer {token}
   "message": "Payment initialized. Complete payment at the authorization URL."
 }
 ```
+
+`reference` must contain only letters, numbers, and hyphens.
 
 #### Wallet Funding Flow
 
@@ -495,6 +508,7 @@ GET https://sandbox.vtpass.com/api/service-variations?serviceID=dstv
 - omitted fields are ignored
 - blank values are rejected
 - at least one field must be provided
+- `phone`, when provided, must be a valid Nigerian mobile number
 
 ---
 
@@ -525,6 +539,33 @@ Transaction types:
   "createdAt": "2026-03-20T21:58:08.857715"
 }
 ```
+
+`referenceId` path values are validated and must contain only letters, numbers, and hyphens.
+
+---
+
+## Error Responses
+
+Validation and API errors use a consistent JSON structure:
+
+```json
+{
+  "timestamp": "2026-04-06T23:00:00",
+  "status": 400,
+  "error": "Bad Request",
+  "message": "Validation failed",
+  "path": "/api/v1/user/profile",
+  "errors": {
+    "phone": "Phone number must be a valid Nigerian mobile number"
+  }
+}
+```
+
+Notes:
+
+- Use `message` for general error feedback
+- Use `errors` for field-level validation messages
+- Rate-limited requests return `429 Too Many Requests` with the same response shape
 
 ---
 
